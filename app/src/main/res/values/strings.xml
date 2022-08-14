@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Stereo Music Player</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="song_name">Song Name</string>
+    <string name="artist_name">Artist Name</string>
+    <string name="image">Here is the album art</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+</resources>
