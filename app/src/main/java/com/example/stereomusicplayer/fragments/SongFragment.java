@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.stereomusicplayer.R;
 import com.example.stereomusicplayer.adapters.SongAdapter;
@@ -36,10 +37,11 @@ public class SongFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_song, container, false);
         recyclerView = view.findViewById(R.id.recyclerView_Songs);
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        if(songFiles.size() >= 1){
+        int size = songFiles== null ? 0 : songFiles.size();
+        if(!(size < 1)){
             songAdapter = new SongAdapter(getContext(), songFiles);
             recyclerView.setAdapter(songAdapter);
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
         }
         return view;
     }
