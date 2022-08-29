@@ -1,6 +1,8 @@
 package com.example.stereomusicplayer.model;
 
-public class Songs {
+import java.io.Serializable;
+
+public class Songs implements Serializable {
     private String path;
     private String title;
     private String artist;
