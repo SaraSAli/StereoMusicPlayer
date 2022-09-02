@@ -8,8 +8,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.MenuItem;
@@ -25,7 +25,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.stereomusicplayer.model.Songs;
 import com.example.stereomusicplayer.services.MusicService;
-import com.google.android.exoplayer2.ExoPlayer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +32,7 @@ import java.util.ArrayList;
 public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnCompletionListener, View.OnClickListener {
 
     private static final String TAG = "MyTag";
+    public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.stereomusicplayer.PlayNewAudio";
 
 
     TextView songName, artistName, albumName, durationPlayed, durationTotal;
@@ -45,6 +45,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
     boolean isBound;
     MusicService musicService;
+    Handler mHandler;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -71,7 +72,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             playerIntent.putExtra("media", media);
             startService(playerIntent);
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-            playBtn.setBackgroundResource(R.drawable.ic_pause);
+            //playBtn.setBackgroundResource(R.drawable.ic_pause);
         } else {
             //Service is active
             //Send media with BroadcastReceiver
@@ -87,11 +88,15 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         getIntentMethod();
         playAudio(songList.get(position).getPath());
 
+        mHandler = new Handler();
+
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-
+                if (isBound && b) {
+                    musicService.seekTo(i * 1000);
+                }
             }
 
             @Override
@@ -104,11 +109,19 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
             }
         });
-        /*if(mediaPlayer != null){
-            int currentPosition = mediaPlayer.getCurrentPosition() / 1000;
-            seekBar.setProgress(currentPosition);
-            durationPlayed.setText(formattedTime(currentPosition));
-        }*/
+
+        PlayerActivity.this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (musicService != null){
+                    int currentPosition = musicService.getCurrentPosition() / 1000;
+                    seekBar.setProgress(currentPosition);
+                    durationPlayed.setText(formattedTime(currentPosition));
+                }
+                mHandler.postDelayed(this, 250);
+            }
+        });
+
     }
 
     private String formattedTime(int currentPosition) {
@@ -142,29 +155,29 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         actionBar.setDisplayHomeAsUpEnabled(true);
         songList = songFiles;
 
-        songName = findViewById(R.id.tv_panel_song_name);
-        artistName = findViewById(R.id.tv_panel_artist_name);
-        albumName = findViewById(R.id.tv_panel_album_name);
-        durationPlayed = findViewById(R.id.tv_pn_remain_time);
-        durationTotal = findViewById(R.id.tv_pn_total_time);
+        songName = findViewById(R.id.tv_song_name);
+        artistName = findViewById(R.id.tv_artist_name);
+        albumName = findViewById(R.id.tv_album_name);
+        durationPlayed = findViewById(R.id.time_left);
+        durationTotal = findViewById(R.id.time_duration);
 
-        playBtn = findViewById(R.id.iv_pn_play_btn);
-        nextBtn = findViewById(R.id.iv_pn_next_btn);
-        prevBtn = findViewById(R.id.iv_pn_prev_btn);
-        /*shuffleBtn = findViewById(R.id.shuffle);
-        repeatBtn = findViewById(R.id.repeat);*/
+        playBtn = findViewById(R.id.play);
+        nextBtn = findViewById(R.id.next);
+        prevBtn = findViewById(R.id.previous);
+        shuffleBtn = findViewById(R.id.shuffle);
+        repeatBtn = findViewById(R.id.repeat);
 
-        seekBar = findViewById(R.id.sb_pn_player);
+        seekBar = findViewById(R.id.seekBar);
         playBtn.setOnClickListener(this);
     }
 
     private void setImage(String imageUrl, String songName) {
         Log.d(TAG, "setImage: setting te image and name to widgets.");
 
-        TextView name = findViewById(R.id.tv_panel_song_name);
+        TextView name = findViewById(R.id.tv_song_name);
         name.setText(songName);
 
-        ImageView image = findViewById(R.id.iv_pn_cover_art_shadow_white_overlay);
+        ImageView image = findViewById(R.id.album_art);
 
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(imageUrl);
@@ -179,8 +192,8 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         else {
             Glide.with(this).load(R.drawable.ic_album_art).into(image);
         }
-
-        durationTotal.setText(String.valueOf(Integer.parseInt(songList.get(position).getDuration()) / 1000));
+        String totalDuration = String.valueOf(Integer.parseInt(songList.get(position).getDuration()) / 1000);
+        durationTotal.setText(totalDuration);
     }
 
     @Override
@@ -194,8 +207,8 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
     @Override
     public void onClick(View view) {
-        if (view.getId() == R.id.iv_pn_play_btn) {
-            if (isBound) {
+        if (view.getId() == R.id.play) {
+            //if (isBound) {
                 if (musicService.isPlaying()) {
                     musicService.pauseMedia();
                     playBtn.setBackgroundResource(R.drawable.ic_play);
@@ -204,7 +217,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
                     playBtn.setBackgroundResource(R.drawable.ic_pause);
                 }
             }
-        }
+        //}
     }
 
     @Override

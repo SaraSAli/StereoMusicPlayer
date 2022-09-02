@@ -11,7 +11,7 @@ public interface PlayerInterface {
     void resumeMedia();
     void seekTo(int position);
     boolean isPlaying();
-    long getDuration();
-    int getCurrentStreamPosition();
+    int getCurrentPosition();
+    int getDuration();
 
 }
