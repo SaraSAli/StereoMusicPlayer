@@ -3,6 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable-nodpi/_bg__music_player_ek2_shape.xml" value="0.1575" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable-nodpi/_bg__play_layout_ek2_shape.xml" value="0.1575" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable-nodpi/line_1_shape.xml" value="0.1575" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/album_art.xml" value="0.1445" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/bg.xml" value="0.1445" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/dialog_bg.xml" value="0.226" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_album_art.xml" value="0.2315" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_arrow_back.xml" value="0.124" />
@@ -17,16 +22,27 @@
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_previous.xml" value="0.124" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_repeat.xml" value="0.139" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_search.xml" value="0.139" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_shuffle_off.xml" value="0.1445" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_shuffle_off_temp.xml" value="0.1375" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_shuffle_on.xml" value="0.1375" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/ic_sort.xml" value="0.1575" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/play_pause.xml" value="0.1575" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/prev.xml" value="0.1575" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/skip_prev.xml" value="0.1575" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/tab_indicator.xml" value="0.2315" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/drawable/temp.xml" value="0.1575" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/activity_full_player.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/activity_main.xml" value="0.11302083333333333" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/activity_player.xml" value="0.1838768115942029" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/fragment_album.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/fragment_artist.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/fragment_player.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/fragment_song.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/notification_layout.xml" value="0.24320652173913043" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/play_back_bottom_sheet.xml" value="0.1" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/song_item.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/layout/temp.xml" value="0.253125" />
+        <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/menu/popup.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/menu/tool_menu.xml" value="0.264" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/mipmap-anydpi-v26/ic_album_art.xml" value="0.153" />
         <entry key="..\:/Users/saras/AndroidStudioProjects/StereoMusicPlayer/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.2315" />

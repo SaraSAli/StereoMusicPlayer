@@ -31,6 +31,8 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -108,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
                 MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media._ID
         };
         Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null);
         if (cursor != null) {
@@ -117,12 +120,20 @@ public class MainActivity extends AppCompatActivity {
                 String duration = cursor.getString(2);
                 String path = cursor.getString(3);
                 String artist = cursor.getString(4);
+                String id = cursor.getString(5);
 
-                Songs song = new Songs(path, title, artist, album, duration);
+                Songs song = new Songs(path, title, artist, album, duration, id);
                 tempSongList.add(song);
             }
             cursor.close();
         }
+
+        //sort the songs based on title
+        Collections.sort(tempSongList, new Comparator<Songs>(){
+            public int compare(Songs a, Songs b){
+                return a.getTitle().compareTo(b.getTitle());
+            }
+        });
 
         return tempSongList;
     }

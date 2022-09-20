@@ -3,15 +3,20 @@ package com.example.stereomusicplayer.adapters;
 import static android.content.Context.BIND_AUTO_CREATE;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,8 +31,10 @@ import com.example.stereomusicplayer.R;
 import com.example.stereomusicplayer.model.Songs;
 import com.example.stereomusicplayer.services.MusicService;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
@@ -66,6 +73,41 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
             i.putExtra("position", position);
             mContext.startActivity(i);
         });
+
+        holder.moreMenu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PopupMenu popupMenu = new PopupMenu(mContext,view);
+                popupMenu.getMenuInflater().inflate(R.menu.popup, popupMenu.getMenu());
+                popupMenu.show();
+                popupMenu.setOnMenuItemClickListener(menuItem -> {
+                    switch (menuItem.getItemId()){
+                        case R.id.delete:
+                            Toast.makeText(mContext, "Delete Clicked", Toast.LENGTH_SHORT).show();
+                            deleteFile(holder.getAdapterPosition(), view);
+                            break;
+                    }
+                    return true;
+                });
+            }
+        });
+    }
+
+    private void deleteFile(final int position, View view){
+        Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                Long.parseLong(songsList.get(position).getId()));
+
+        File file = new File(songsList.get(position).getPath());
+        boolean deleted = file.delete();
+        if(deleted) {
+            mContext.getContentResolver().delete(contentUri, null, null);
+            songsList.remove(position);
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, songsList.size());
+            Toast.makeText(mContext, "Song Deleted", Toast.LENGTH_SHORT).show();
+        }
+        else
+            Toast.makeText(mContext, "Song can't be deleted", Toast.LENGTH_SHORT).show();
     }
 
     private byte[] getAlbumArt(String uri) {
@@ -88,7 +130,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         public TextView songName, artistName;
-        public ImageView album_art;
+        public ImageView album_art, moreMenu;
         RelativeLayout parentLayout;
 
         public ViewHolder(@NonNull View itemView) {
@@ -97,6 +139,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
             artistName = itemView.findViewById(R.id.tv_artist_name);
             album_art = itemView.findViewById(R.id.song_img);
             parentLayout = itemView.findViewById(R.id.song_item);
+            moreMenu = itemView.findViewById(R.id.menu_more);
         }
     }
 }

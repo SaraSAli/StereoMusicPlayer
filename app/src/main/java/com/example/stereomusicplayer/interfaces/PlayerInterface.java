@@ -13,5 +13,6 @@ public interface PlayerInterface {
     boolean isPlaying();
     int getCurrentPosition();
     int getDuration();
-
+    void skipToNext();
+    void skipToPrevious();
 }

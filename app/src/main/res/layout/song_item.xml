@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:padding="10dp"
     android:layout_marginTop="5dp"
-    android:background="@color/blue_500"
+    android:background="@color/colorAccent"
     android:id="@+id/song_item">
 
     <ImageView
@@ -18,12 +18,12 @@
         android:id="@+id/tv_song_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="17dp"
         android:layout_toEndOf="@id/song_img"
         android:singleLine="true"
         android:text="@string/song_name"
+        android:layout_toStartOf="@+id/menu_more"
         android:textSize="20sp" />
 
     <TextView
@@ -37,6 +37,15 @@
         android:paddingTop="5dp"
         android:textSize="14sp"
         android:id="@+id/tv_artist_name"
+        android:layout_toStartOf="@+id/menu_more"
         android:maxLines="1"/>
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:id="@+id/menu_more"
+        android:src="@drawable/ic_more"
+        android:layout_alignParentEnd="true"
+        />
 
 </RelativeLayout>

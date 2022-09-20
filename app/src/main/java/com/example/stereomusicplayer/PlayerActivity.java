@@ -17,6 +17,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -25,6 +26,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.example.stereomusicplayer.model.Songs;
 import com.example.stereomusicplayer.services.MusicService;
+import com.example.stereomusicplayer.utils.StorageUtil;
+import com.example.stereomusicplayer.viewmodel.PlayerActivityViewModel;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,12 +35,16 @@ import java.util.ArrayList;
 public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnCompletionListener, View.OnClickListener {
 
     private static final String TAG = "MyTag";
-    public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.stereomusicplayer.PlayNewAudio";
+    public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.stereomusicplayer.services.MusicService.PlayNewAudio";
 
 
     TextView songName, artistName, albumName, durationPlayed, durationTotal;
     ImageView playBtn, nextBtn, prevBtn, shuffleBtn, repeatBtn;
     SeekBar seekBar;
+
+    boolean shuffleBoolean, repeatBoolean;
+
+    PlayerActivityViewModel viewModel;
 
     static ArrayList<Songs> songList = new ArrayList<>();
 
@@ -65,20 +72,6 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         }
     };
 
-    private void playAudio(String media) {
-        //Check is service is active
-        if (!isBound) {
-            Intent playerIntent = new Intent(this, MusicService.class);
-            playerIntent.putExtra("media", media);
-            startService(playerIntent);
-            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-            //playBtn.setBackgroundResource(R.drawable.ic_pause);
-        } else {
-            //Service is active
-            //Send media with BroadcastReceiver
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,15 +81,11 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         getIntentMethod();
         playAudio(songList.get(position).getPath());
 
-        mHandler = new Handler();
-
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                if (isBound && b) {
-                    musicService.seekTo(i * 1000);
-                }
+
             }
 
             @Override
@@ -109,27 +98,34 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
             }
         });
+    }
 
-        PlayerActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (musicService != null){
-                    int currentPosition = musicService.getCurrentPosition() / 1000;
-                    seekBar.setProgress(currentPosition);
-                    durationPlayed.setText(formattedTime(currentPosition));
-                }
-                mHandler.postDelayed(this, 250);
-            }
-        });
+    private void playAudio(String media) {
+        //Check is service is active
+        if (!isBound) {
+            Intent playerIntent = new Intent(this, MusicService.class);
+            playerIntent.putExtra("media", media);
+            startService(playerIntent);
+            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+            playBtn.setBackgroundResource(R.drawable.ic_pause);
+        } else {
+            //Store the new audioIndex to SharedPreferences
+            StorageUtil storage = new StorageUtil(getApplicationContext());
+            storage.storeAudioIndex(position);
 
+            //Service is active
+            //Send a broadcast to the service -> PLAY_NEW_AUDIO
+            Intent broadcastIntent = new Intent(Broadcast_PLAY_NEW_AUDIO);
+            sendBroadcast(broadcastIntent);
+        }
     }
 
     private String formattedTime(int currentPosition) {
         String minutes = String.valueOf(currentPosition / 60);
         String seconds = String.valueOf(currentPosition % 60);
 
-        if(seconds.length() == 1) return minutes + ":0" + seconds;
-        else return  minutes + ":" + seconds;
+        if (seconds.length() == 1) return minutes + ":0" + seconds;
+        else return minutes + ":" + seconds;
     }
 
     private void getIntentMethod() {
@@ -189,6 +185,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         }
         if (image != null)
             Glide.with(this).asBitmap().load(imageArr).into(image);
+
         else {
             Glide.with(this).load(R.drawable.ic_album_art).into(image);
         }
@@ -208,7 +205,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.play) {
-            //if (isBound) {
+            if (isBound) {
                 if (musicService.isPlaying()) {
                     musicService.pauseMedia();
                     playBtn.setBackgroundResource(R.drawable.ic_play);
@@ -217,7 +214,28 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
                     playBtn.setBackgroundResource(R.drawable.ic_pause);
                 }
             }
-        //}
+        } else if (view.getId() == R.id.next) {
+            musicService.skipToNext();
+        } else if (view.getId() == R.id.previous) {
+            musicService.skipToPrevious();
+            Toast.makeText(this, "Previous button clicked", Toast.LENGTH_SHORT).show();
+        } else if (view.getId() == R.id.shuffle) {
+            if (shuffleBoolean) {
+                shuffleBoolean = false;
+                shuffleBtn.setImageResource(R.drawable.ic_shuffle_off);
+            } else {
+                shuffleBoolean = true;
+                shuffleBtn.setImageResource(R.drawable.ic_shuffle_on);
+            }
+        } else if (view.getId() == R.id.repeat) {
+            if (repeatBoolean) {
+                repeatBoolean = false;
+                repeatBtn.setImageResource(R.drawable.ic_repeat_off);
+            } else {
+                repeatBoolean = true;
+                repeatBtn.setImageResource(R.drawable.ic_repeat_on);
+            }
+        }
     }
 
     @Override
@@ -237,7 +255,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         isBound = savedInstanceState.getBoolean("ServiceState");
     }
 
-/*    @Override
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (isBound) {
@@ -245,5 +263,15 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             //service is active
             musicService.stopSelf();
         }
-    }*/
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        // If the user is currently looking at the first step, allow the system to handle the
+        // Back button. This calls finish() on this activity and pops the back stack.
+        super.onBackPressed();
+        finish();
+
+    }
 }
