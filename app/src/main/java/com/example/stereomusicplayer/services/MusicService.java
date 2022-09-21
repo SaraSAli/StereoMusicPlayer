@@ -81,39 +81,17 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        /*try {
-            //An audio file is passed to the service through putExtra();
-            mediaFile = intent.getExtras().getString("media");
-            uri = Uri.parse(mediaFile);
-
-            //Load data from SharedPreferences
-            StorageUtil storage = new StorageUtil(getApplicationContext());
-            audioList = storage.loadAudio();
-            audioIndex = storage.loadAudioIndex();
-
-            if (audioIndex != -1 && audioIndex < audioList.size()) {
-                //index is in a valid range
-                activeAudio = audioList.get(audioIndex);
-            } else
-                stopSelf();
-        } catch (NullPointerException e) {
-            stopSelf();
-        }
-
-        if (mediaFile != null && !mediaFile.equals(""))
-            initMediaPlayer();
-
-        return super.onStartCommand(intent, flags, startId);*/
-
         try {
 
             //Load data from SharedPreferences
             mediaFile = intent.getExtras().getString("media");
             uri = Uri.parse(mediaFile);
+            //audioIndex = Integer.parseInt(intent.getExtras().getString("position"));
 
             StorageUtil storage = new StorageUtil(getApplicationContext());
             audioList = storage.loadAudio();
             audioIndex = storage.loadAudioIndex();
+            Log.d(TAG, "onStartCommand: This is audioIndex: "+audioIndex);
 
             if (audioIndex != -1 && audioIndex < audioList.size()) {
                 //index is in a valid range
@@ -126,7 +104,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
 
         //Request audio focus
-        if (requestAudioFocus() == false) {
+        if (!requestAudioFocus()) {
             //Could not gain focus
             stopSelf();
         }
@@ -175,7 +153,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         //unregister BroadcastReceivers
         //unregisterReceiver(becomingNoisyReceiver);
-        //unregisterReceiver(playNewAudio);
+        unregisterReceiver(playNewAudio);
 
         //clear cached playlist
         new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
@@ -185,7 +163,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     public void skipToNext() {
-
+        Log.i(TAG, "skipToNext: Before audioIndex: "+audioIndex);
         if (audioIndex == audioList.size() - 1) {
             //if last in playlist
             audioIndex = 0;
@@ -194,6 +172,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             //get next in playlist
             activeAudio = audioList.get(++audioIndex);
         }
+        Log.i(TAG, "skipToNext: After audioIndex: "+audioIndex);
 
         //Update stored index
         new StorageUtil(getApplicationContext()).storeAudioIndex(audioIndex);
@@ -203,6 +182,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         //reset mediaPlayer
         mediaPlayer.reset();
         initMediaPlayer();
+        updateMetaData();
     }
 
     public void skipToPrevious() {
@@ -224,6 +204,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         //reset mediaPlayer
         mediaPlayer.reset();
         initMediaPlayer();
+        updateMetaData();
     }
 
     @Override
@@ -343,8 +324,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         try {
             // Set the data source to the mediaFile location
-            mediaPlayer.setDataSource(mediaFile);
-            //mediaPlayer.setDataSource(activeAudio.getPath());
+            //mediaPlayer.setDataSource(mediaFile);
+            mediaPlayer.setDataSource(activeAudio.getPath());
         } catch (IOException e) {
             e.printStackTrace();
             stopSelf();
@@ -367,7 +348,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
         //Set mediaSession's MetaData
-        //updateMetaData();
+        updateMetaData();
 
         // Attach Callback to receive MediaSession updates
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -393,7 +374,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 super.onSkipToNext();
 
                 skipToNext();
-                //updateMetaData();
+                updateMetaData();
                 //buildNotification(PlaybackStatus.PLAYING);
             }
 
@@ -402,7 +383,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 super.onSkipToPrevious();
 
                 skipToPrevious();
-                //updateMetaData();
+                updateMetaData();
                 //buildNotification(PlaybackStatus.PLAYING);
             }
 
@@ -421,9 +402,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         });
     }
 
-/*    private void updateMetaData() {
+    private void updateMetaData() {
         Bitmap albumArt = BitmapFactory.decodeResource(getResources(),
-                R.drawable.ic_album_art); //replace with medias albumArt
+                R.drawable.album_art); //replace with medias albumArt
         // Update the current metadata
         mediaSession.setMetadata(new MediaMetadataCompat.Builder()
                 .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
@@ -431,7 +412,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, activeAudio.getAlbum())
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getTitle())
                 .build());
-    }*/
+    }
 
 
     public class MusicBinder extends Binder {
@@ -474,7 +455,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             stopMedia();
             mediaPlayer.reset();
             initMediaPlayer();
-            //updateMetaData();
+            updateMetaData();
         }
     };
 

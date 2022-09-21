@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -39,7 +40,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
 
     TextView songName, artistName, albumName, durationPlayed, durationTotal;
-    ImageView playBtn, nextBtn, prevBtn, shuffleBtn, repeatBtn;
+    ImageButton playBtn, nextBtn, prevBtn, shuffleBtn, repeatBtn;
     SeekBar seekBar;
 
     boolean shuffleBoolean, repeatBoolean;
@@ -79,7 +80,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
         initView();
         getIntentMethod();
-        playAudio(songList.get(position).getPath());
+        playAudio(songList.get(position).getPath(), position);
 
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -100,11 +101,12 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         });
     }
 
-    private void playAudio(String media) {
+    private void playAudio(String media, int index) {
         //Check is service is active
         if (!isBound) {
             Intent playerIntent = new Intent(this, MusicService.class);
             playerIntent.putExtra("media", media);
+            playerIntent.putExtra("position", index);
             startService(playerIntent);
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
             playBtn.setBackgroundResource(R.drawable.ic_pause);
@@ -165,6 +167,10 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
         seekBar = findViewById(R.id.seekBar);
         playBtn.setOnClickListener(this);
+        nextBtn.setOnClickListener(this);
+        prevBtn.setOnClickListener(this);
+        repeatBtn.setOnClickListener(this);
+        shuffleBtn.setOnClickListener(this);
     }
 
     private void setImage(String imageUrl, String songName) {
@@ -214,12 +220,16 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
                     playBtn.setBackgroundResource(R.drawable.ic_pause);
                 }
             }
-        } else if (view.getId() == R.id.next) {
+        }
+        if (view.getId() == R.id.next) {
             musicService.skipToNext();
-        } else if (view.getId() == R.id.previous) {
-            musicService.skipToPrevious();
+        }
+        if (view.getId() == R.id.previous) {
             Toast.makeText(this, "Previous button clicked", Toast.LENGTH_SHORT).show();
-        } else if (view.getId() == R.id.shuffle) {
+            musicService.skipToPrevious();
+        }
+        if (view.getId() == R.id.shuffle) {
+            Log.d("This Class", "I am a working button!");
             if (shuffleBoolean) {
                 shuffleBoolean = false;
                 shuffleBtn.setImageResource(R.drawable.ic_shuffle_off);
@@ -227,7 +237,8 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
                 shuffleBoolean = true;
                 shuffleBtn.setImageResource(R.drawable.ic_shuffle_on);
             }
-        } else if (view.getId() == R.id.repeat) {
+        }
+        if (view.getId() == R.id.repeat) {
             if (repeatBoolean) {
                 repeatBoolean = false;
                 repeatBtn.setImageResource(R.drawable.ic_repeat_off);
