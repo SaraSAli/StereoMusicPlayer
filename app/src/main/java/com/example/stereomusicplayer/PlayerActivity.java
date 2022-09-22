@@ -50,6 +50,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
     static ArrayList<Songs> songList = new ArrayList<>();
 
     int position;
+    int audioIndex;
 
     boolean isBound;
     MusicService musicService;
@@ -104,6 +105,10 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
     private void playAudio(String media, int index) {
         //Check is service is active
         if (!isBound) {
+            StorageUtil storage = new StorageUtil(getApplicationContext());
+            storage.storeAudio(songList);
+            storage.storeAudioIndex(position);
+
             Intent playerIntent = new Intent(this, MusicService.class);
             playerIntent.putExtra("media", media);
             playerIntent.putExtra("position", index);
@@ -137,12 +142,18 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             Log.d(TAG, "getIncomingIntent: found intent extras.");
 
             position = getIntent().getIntExtra("position", -1);
+
+            StorageUtil storage = new StorageUtil(getApplicationContext());
+            //audioList = storage.loadAudio();
+            audioIndex = storage.loadAudioIndex();
+            Log.d(TAG, "getIntentMethod: This is audioIndex: "+audioIndex);
+
             Log.i(TAG, "getPosition: " + position);
-            setImage(songList.get(position).getPath(), songList.get(position).getTitle());
-            songName.setText(songList.get(position).getTitle());
-            artistName.setText(songList.get(position).getArtist());
-            albumName.setText(songList.get(position).getAlbum());
-            Log.i(TAG, "getIntentMethod: Position" + position);
+            setImage(songList.get(audioIndex).getPath(), songList.get(audioIndex).getTitle());
+            songName.setText(songList.get(audioIndex).getTitle());
+            artistName.setText(songList.get(audioIndex).getArtist());
+            albumName.setText(songList.get(audioIndex).getAlbum());
+            Log.i(TAG, "getIntentMethod: Position " + position);
         }
     }
 
@@ -223,13 +234,13 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         }
         if (view.getId() == R.id.next) {
             musicService.skipToNext();
+            getIntentMethod();
         }
         if (view.getId() == R.id.previous) {
-            Toast.makeText(this, "Previous button clicked", Toast.LENGTH_SHORT).show();
             musicService.skipToPrevious();
+            getIntentMethod();
         }
         if (view.getId() == R.id.shuffle) {
-            Log.d("This Class", "I am a working button!");
             if (shuffleBoolean) {
                 shuffleBoolean = false;
                 shuffleBtn.setImageResource(R.drawable.ic_shuffle_off);

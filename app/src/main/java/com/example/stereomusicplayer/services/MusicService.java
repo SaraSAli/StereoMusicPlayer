@@ -1,5 +1,7 @@
 package com.example.stereomusicplayer.services;
 
+import static com.example.stereomusicplayer.MainActivity.songFiles;
+
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -74,6 +76,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public void onCreate() {
         super.onCreate();
 
+        audioList = songFiles;
+        System.out.println(audioList);
         register_playNewAudio();
         Toast.makeText(this, "Service started...", Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onCreate() , service started...");
@@ -82,7 +86,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
-
             //Load data from SharedPreferences
             mediaFile = intent.getExtras().getString("media");
             uri = Uri.parse(mediaFile);
@@ -97,7 +100,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 //index is in a valid range
                 activeAudio = audioList.get(audioIndex);
             } else {
-                stopSelf();
+                //stopSelf();
+                activeAudio = audioList.get(0);
             }
         } catch (NullPointerException e) {
             stopSelf();
@@ -110,13 +114,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
 
         if (mediaSessionManager == null) {
-            try {
-                initMediaSession();
-                initMediaPlayer();
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                stopSelf();
-            }
+            //initMediaSession();
+            initMediaPlayer();
             //buildNotification(PlaybackStatus.PLAYING);
         }
 
@@ -182,7 +181,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         //reset mediaPlayer
         mediaPlayer.reset();
         initMediaPlayer();
-        updateMetaData();
+        //updateMetaData();
     }
 
     public void skipToPrevious() {
@@ -204,7 +203,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         //reset mediaPlayer
         mediaPlayer.reset();
         initMediaPlayer();
-        updateMetaData();
+        //updateMetaData();
     }
 
     @Override
@@ -324,96 +323,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         try {
             // Set the data source to the mediaFile location
-            //mediaPlayer.setDataSource(mediaFile);
-            mediaPlayer.setDataSource(activeAudio.getPath());
+            mediaPlayer.setDataSource(mediaFile);
+            //mediaPlayer.setDataSource(activeAudio.getPath());
         } catch (IOException e) {
             e.printStackTrace();
             stopSelf();
         }
         mediaPlayer.prepareAsync();
     }
-
-    private void initMediaSession() throws RemoteException {
-        if (mediaSessionManager != null) return; //mediaSessionManager exists
-
-        mediaSessionManager = (MediaSessionManager) getSystemService(Context.MEDIA_SESSION_SERVICE);
-        // Create a new MediaSession
-        mediaSession = new MediaSessionCompat(getApplicationContext(), "AudioPlayer");
-        //Get MediaSessions transport controls
-        transportControls = mediaSession.getController().getTransportControls();
-        //set MediaSession -> ready to receive media commands
-        mediaSession.setActive(true);
-        //indicate that the MediaSession handles transport control commands
-        // through its MediaSessionCompat.Callback.
-        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-
-        //Set mediaSession's MetaData
-        updateMetaData();
-
-        // Attach Callback to receive MediaSession updates
-        mediaSession.setCallback(new MediaSessionCompat.Callback() {
-            // Implement callbacks
-            @Override
-            public void onPlay() {
-                super.onPlay();
-
-                resumeMedia();
-                //buildNotification(PlaybackStatus.PLAYING);
-            }
-
-            @Override
-            public void onPause() {
-                super.onPause();
-
-                pauseMedia();
-                //buildNotification(PlaybackStatus.PAUSED);
-            }
-
-            @Override
-            public void onSkipToNext() {
-                super.onSkipToNext();
-
-                skipToNext();
-                updateMetaData();
-                //buildNotification(PlaybackStatus.PLAYING);
-            }
-
-            @Override
-            public void onSkipToPrevious() {
-                super.onSkipToPrevious();
-
-                skipToPrevious();
-                updateMetaData();
-                //buildNotification(PlaybackStatus.PLAYING);
-            }
-
-            @Override
-            public void onStop() {
-                super.onStop();
-                //removeNotification();
-                //Stop the service
-                stopSelf();
-            }
-
-            @Override
-            public void onSeekTo(long position) {
-                super.onSeekTo(position);
-            }
-        });
-    }
-
-    private void updateMetaData() {
-        Bitmap albumArt = BitmapFactory.decodeResource(getResources(),
-                R.drawable.album_art); //replace with medias albumArt
-        // Update the current metadata
-        mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, activeAudio.getArtist())
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, activeAudio.getAlbum())
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getTitle())
-                .build());
-    }
-
 
     public class MusicBinder extends Binder {
         public MusicService getService() {
@@ -447,7 +364,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 //index is in a valid range
                 activeAudio = audioList.get(audioIndex);
             } else {
-                stopSelf();
+                //stopSelf();
+                activeAudio = audioList.get(0);
             }
 
             //A PLAY_NEW_AUDIO action received
@@ -455,7 +373,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             stopMedia();
             mediaPlayer.reset();
             initMediaPlayer();
-            updateMetaData();
+            //updateMetaData();
         }
     };
 

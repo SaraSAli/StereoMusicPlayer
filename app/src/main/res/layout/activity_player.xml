@@ -110,7 +110,8 @@
             android:id="@+id/shuffle"
             android:layout_width="68dp"
             android:layout_height="68dp"
-            android:background="@drawable/ic_shuffle_on"
+            android:background="@android:color/transparent"
+            app:srcCompat="@drawable/ic_shuffle_on"
    />
 
         <ImageButton

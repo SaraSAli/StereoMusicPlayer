@@ -13,7 +13,7 @@ import java.lang.reflect.Type;
 
 
 public class StorageUtil {
-    private final String STORAGE = "com.example.stereomusicplayer.utils.STORAGE";
+    private final String STORAGE = "com.example.stereomusicplayer.STORAGE";
     private SharedPreferences preferences;
     private Context context;
 
