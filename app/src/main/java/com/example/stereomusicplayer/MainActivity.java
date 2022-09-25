@@ -1,5 +1,7 @@
 package com.example.stereomusicplayer;
 
+import static com.example.stereomusicplayer.fragments.SongFragment.songAdapter;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -30,9 +32,8 @@ import com.google.android.material.tabs.TabLayoutMediator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
 
     private TabLayout mTablayout;
     private ViewPager2 mViewPager;
@@ -106,8 +107,8 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.tool_menu, menu);
         MenuItem menuItem = menu.findItem(R.id.action_search);
-        /*SearchView searchView = (SearchView) menuItem.getActionView();
-        searchView.setOnQueryTextListener(this);*/
+        SearchView searchView = (SearchView) menuItem.getActionView();
+        searchView.setOnQueryTextListener(this);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -152,6 +153,24 @@ public class MainActivity extends AppCompatActivity {
         });
 
         return tempSongList;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String s) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String s) {
+        String userInput = s.toLowerCase();
+        ArrayList<Songs> myFiles = new ArrayList<>();
+        for (Songs song : songFiles) {
+            if (song.getTitle().toLowerCase().contains(userInput)){
+                myFiles.add(song);
+            }
+        }
+        songAdapter.updateList(myFiles);
+        return true;
     }
 
     public static class ScreenSlidePagerAdapter extends FragmentStateAdapter {

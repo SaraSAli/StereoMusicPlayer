@@ -1,9 +1,6 @@
 package com.example.stereomusicplayer.adapters;
 
-import static android.content.Context.BIND_AUTO_CREATE;
-
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.annotation.SuppressLint;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -12,7 +9,6 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -25,17 +21,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.stereomusicplayer.MainActivity;
 import com.example.stereomusicplayer.PlayerActivity;
 import com.example.stereomusicplayer.R;
 import com.example.stereomusicplayer.model.Songs;
-import com.example.stereomusicplayer.services.MusicService;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
 
@@ -120,9 +112,9 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
         return art;
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     public void updateList(ArrayList<Songs> songsArrayList){
-        songsList = new ArrayList<>();
-        songsList.addAll(songsArrayList);
+        this.songsList = songsArrayList;
         notifyDataSetChanged();
     }
 

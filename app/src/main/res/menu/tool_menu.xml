@@ -7,7 +7,7 @@
         android:icon="@drawable/ic_search"
         android:title="@string/search"
         app:showAsAction="ifRoom|withText"
-        app:actionViewClass="androidx.appcompat.widget.SearchView" />
+        app:actionViewClass="android.widget.SearchView" />
 
     <item
         android:id="@+id/action_sort"
