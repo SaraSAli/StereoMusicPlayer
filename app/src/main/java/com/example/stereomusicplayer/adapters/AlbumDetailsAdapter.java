@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,18 +15,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.stereomusicplayer.AlbumDetails;
+import com.example.stereomusicplayer.PlayerActivity;
 import com.example.stereomusicplayer.R;
 import com.example.stereomusicplayer.model.Songs;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder> {
+public class AlbumDetailsAdapter extends RecyclerView.Adapter<AlbumDetailsAdapter.ViewHolder> {
 
     private Context mContext;
-    private ArrayList<Songs> albumFiles;
+    public static ArrayList<Songs> albumFiles;
 
-    public AlbumAdapter(Context mContext, ArrayList<Songs> albumFiles) {
+    public AlbumDetailsAdapter(Context mContext, ArrayList<Songs> albumFiles) {
         this.mContext = mContext;
         this.albumFiles = albumFiles;
     }
@@ -33,22 +35,23 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder> 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.album_item, parent, false);
-        return new AlbumAdapter.ViewHolder(view);
+        View view = LayoutInflater.from(mContext).inflate(R.layout.song_item, parent, false);
+        return new AlbumDetailsAdapter.ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.album_name.setText(albumFiles.get(position).getAlbum());
+        holder.songName.setText(albumFiles.get(position).getTitle());
         byte[] image = getAlbumArt(albumFiles.get(position).getPath());
         if (image != null)
-            Glide.with(mContext).asBitmap().load(image).into(holder.album_image);
+            Glide.with(mContext).asBitmap().load(image).into(holder.album_art);
         else
-            Glide.with(mContext).load(R.drawable.ic_album_art).into(holder.album_image);
+            Glide.with(mContext).load(R.drawable.ic_album_art).into(holder.album_art);
 
-        holder.itemView.setOnClickListener(view -> {
-            Intent intent = new Intent(mContext, AlbumDetails.class);
-            intent.putExtra("albumName", albumFiles.get(position).getAlbum());
+        holder.parentLayout.setOnClickListener(view -> {
+            Intent intent = new Intent(mContext, PlayerActivity.class);
+            intent.putExtra("sender", "albumDetails");
+            intent.putExtra("position", position);
             mContext.startActivity(intent);
         });
     }
@@ -59,12 +62,17 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.ViewHolder> 
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView album_image;
-        TextView album_name;
+        public TextView songName, artistName;
+        public ImageView album_art, moreMenu;
+        RelativeLayout parentLayout;
+
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            album_image = itemView.findViewById(R.id.album_art);
-            album_name = itemView.findViewById(R.id.album_name);
+            songName = itemView.findViewById(R.id.tv_song_name);
+            artistName = itemView.findViewById(R.id.tv_artist_name);
+            album_art = itemView.findViewById(R.id.song_img);
+            parentLayout = itemView.findViewById(R.id.song_item);
+            moreMenu = itemView.findViewById(R.id.menu_more);
         }
     }
 

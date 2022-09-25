@@ -22,8 +22,8 @@ import java.util.List;
 
 public class SongFragment extends Fragment {
 
+    public static SongAdapter songAdapter;
     private RecyclerView recyclerView;
-    SongAdapter songAdapter;
 
     public SongFragment() {
         // Required empty public constructor

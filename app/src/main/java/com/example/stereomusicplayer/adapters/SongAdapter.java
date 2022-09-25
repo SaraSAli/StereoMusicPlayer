@@ -74,22 +74,20 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
             mContext.startActivity(i);
         });
 
-        holder.moreMenu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                PopupMenu popupMenu = new PopupMenu(mContext,view);
-                popupMenu.getMenuInflater().inflate(R.menu.popup, popupMenu.getMenu());
-                popupMenu.show();
-                popupMenu.setOnMenuItemClickListener(menuItem -> {
-                    switch (menuItem.getItemId()){
-                        case R.id.delete:
-                            Toast.makeText(mContext, "Delete Clicked", Toast.LENGTH_SHORT).show();
-                            deleteFile(holder.getAdapterPosition(), view);
-                            break;
-                    }
-                    return true;
-                });
-            }
+        holder.moreMenu.setOnClickListener(view -> {
+            PopupMenu popupMenu = new PopupMenu(mContext,view);
+            popupMenu.getMenuInflater().inflate(R.menu.popup, popupMenu.getMenu());
+            popupMenu.show();
+            popupMenu.setOnMenuItemClickListener(menuItem -> {
+                switch (menuItem.getItemId()){
+                    case R.id.delete:
+                        Toast.makeText(mContext, "Delete Clicked", Toast.LENGTH_SHORT).show();
+                        //deleteFile(holder.getAdapterPosition(), view);
+                        deleteFile(position, view);
+                        break;
+                }
+                return true;
+            });
         });
     }
 
@@ -120,6 +118,12 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
             e.printStackTrace();
         }
         return art;
+    }
+
+    public void updateList(ArrayList<Songs> songsArrayList){
+        songsList = new ArrayList<>();
+        songsList.addAll(songsArrayList);
+        notifyDataSetChanged();
     }
 
     @Override

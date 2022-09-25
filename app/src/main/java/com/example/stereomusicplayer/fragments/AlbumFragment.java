@@ -1,5 +1,6 @@
 package com.example.stereomusicplayer.fragments;
 
+import static com.example.stereomusicplayer.MainActivity.albums;
 import static com.example.stereomusicplayer.MainActivity.songFiles;
 
 import android.os.Bundle;
@@ -35,9 +36,9 @@ public class AlbumFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_album, container, false);
         recyclerView = view.findViewById(R.id.recyclerView_Songs);
         recyclerView.setHasFixedSize(true);
-        int size = songFiles== null ? 0 : songFiles.size();
+        int size = albums== null ? 0 : albums.size();
         if(!(size < 1)){
-            albumAdapter = new AlbumAdapter(getContext(), songFiles);
+            albumAdapter = new AlbumAdapter(getContext(), albums);
             recyclerView.setAdapter(albumAdapter);
             //recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));

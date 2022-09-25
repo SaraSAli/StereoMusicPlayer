@@ -1,6 +1,9 @@
 package com.example.stereomusicplayer;
 
+import static com.example.stereomusicplayer.MainActivity.repeatBoolean;
+import static com.example.stereomusicplayer.MainActivity.shuffleBoolean;
 import static com.example.stereomusicplayer.MainActivity.songFiles;
+import static com.example.stereomusicplayer.adapters.AlbumDetailsAdapter.albumFiles;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -43,8 +46,6 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
     ImageButton playBtn, nextBtn, prevBtn, shuffleBtn, repeatBtn;
     SeekBar seekBar;
 
-    boolean shuffleBoolean, repeatBoolean;
-
     PlayerActivityViewModel viewModel;
 
     static ArrayList<Songs> songList = new ArrayList<>();
@@ -54,7 +55,6 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
     boolean isBound;
     MusicService musicService;
-    Handler mHandler;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -162,7 +162,13 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         assert actionBar != null;
         actionBar.setHomeAsUpIndicator(R.drawable.ic_arrow_back);
         actionBar.setDisplayHomeAsUpEnabled(true);
-        songList = songFiles;
+
+        String getSender = getIntent().getStringExtra("sender");
+
+        if(getSender != null && getSender.equals("albumDetails"))
+            songList = albumFiles;
+        else
+            songList = songFiles;
 
         songName = findViewById(R.id.tv_song_name);
         artistName = findViewById(R.id.tv_artist_name);

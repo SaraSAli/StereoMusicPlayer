@@ -1,38 +1,36 @@
 package com.example.stereomusicplayer;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.SearchView;
 
 import com.example.stereomusicplayer.fragments.AlbumFragment;
 import com.example.stereomusicplayer.fragments.ArtistFragment;
 import com.example.stereomusicplayer.fragments.SongFragment;
 import com.example.stereomusicplayer.model.Songs;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,7 +41,10 @@ public class MainActivity extends AppCompatActivity {
     private String[] titles = {"Songs", "Albums", "Artists"};
     public static final int PERMISSION_REQUEST_CODE = 1;
 
+    static boolean shuffleBoolean = false, repeatBoolean = false;
+
     public static ArrayList<Songs> songFiles;
+    public static ArrayList<Songs> albums = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +102,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.tool_menu, menu);
+        MenuItem menuItem = menu.findItem(R.id.action_search);
+        /*SearchView searchView = (SearchView) menuItem.getActionView();
+        searchView.setOnQueryTextListener(this);*/
+        return super.onCreateOptionsMenu(menu);
+    }
+
     public static ArrayList<Songs> getAllSongs(Context context) {
+        ArrayList<String> duplicate = new ArrayList<>();
         ArrayList<Songs> tempSongList = new ArrayList<>();
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {
@@ -124,6 +135,11 @@ public class MainActivity extends AppCompatActivity {
 
                 Songs song = new Songs(path, title, artist, album, duration, id);
                 tempSongList.add(song);
+
+                if(!duplicate.contains(album)) {
+                    albums.add(song);
+                    duplicate.add(album);
+                }
             }
             cursor.close();
         }
