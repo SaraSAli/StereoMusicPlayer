@@ -23,6 +23,10 @@
                 android:id="@+id/by_name"
                 android:title="Name"
                 app:showAsAction="never" />
+            <item
+                android:id="@+id/by_size"
+                android:title="Size"
+                app:showAsAction="never" />
         </menu>
     </item>
 
