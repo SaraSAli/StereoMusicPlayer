@@ -5,6 +5,7 @@ import static com.example.stereomusicplayer.MainActivity.shuffleBoolean;
 import static com.example.stereomusicplayer.MainActivity.songFiles;
 import static com.example.stereomusicplayer.adapters.AlbumDetailsAdapter.albumFiles;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -17,11 +18,12 @@ import android.os.IBinder;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -35,10 +37,11 @@ import com.example.stereomusicplayer.viewmodel.PlayerActivityViewModel;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnCompletionListener, View.OnClickListener {
 
-    private static final String TAG = "MyTag";
+    private static final String TAG = "PlayerActivity";
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.stereomusicplayer.services.MusicService.PlayNewAudio";
 
 
@@ -52,9 +55,12 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
     int position;
     int audioIndex;
+    Songs activeAudio;
 
     boolean isBound;
     MusicService musicService;
+    Runnable runnable;
+    Handler handler = new Handler();
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -83,11 +89,18 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         getIntentMethod();
         playAudio(songList.get(position).getPath(), position);
 
-
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-
+                if (b) {
+                    if (isBound && musicService.isPlaying()) {
+                        //musicService.seekTo((i * musicService.getDuration()) / 100);
+                        musicService.seekTo(i * 1000);
+                    }
+                }
+                int duration = musicService.getCurrentPosition();
+                String time = formatDuration(duration);
+                durationPlayed.setText(time);
             }
 
             @Override
@@ -100,6 +113,25 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
 
             }
         });
+
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isBound) {
+                    Log.d(TAG, "run: musicService getCurrentPosition: " + musicService.getCurrentPosition()/1000);
+                    //seekBar.setProgress(musicService.getCurrentPosition() / 1000);
+                    int mCurrentPosition = musicService.getCurrentPosition();
+                    seekBar.setProgress(mCurrentPosition/1000);
+                    durationPlayed.setText(formatDuration(mCurrentPosition));
+
+                    int totalDuration = musicService.getDuration();
+                    if(seekBar.getProgress() == totalDuration) updateMetaData();
+
+                }
+                handler.postDelayed(this, 1000);
+            }
+        };
+        runnable.run();
     }
 
     private void playAudio(String media, int index) {
@@ -107,7 +139,8 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         if (!isBound) {
             StorageUtil storage = new StorageUtil(getApplicationContext());
             storage.storeAudio(songList);
-            storage.storeAudioIndex(position);
+            //storage.storeAudioIndex(audioIndex);
+            storage.storeAudioIndex(index);
 
             Intent playerIntent = new Intent(this, MusicService.class);
             playerIntent.putExtra("media", media);
@@ -118,7 +151,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         } else {
             //Store the new audioIndex to SharedPreferences
             StorageUtil storage = new StorageUtil(getApplicationContext());
-            storage.storeAudioIndex(position);
+            storage.storeAudioIndex(index);
 
             //Service is active
             //Send a broadcast to the service -> PLAY_NEW_AUDIO
@@ -127,12 +160,14 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         }
     }
 
-    private String formattedTime(int currentPosition) {
-        String minutes = String.valueOf(currentPosition / 60);
-        String seconds = String.valueOf(currentPosition % 60);
 
-        if (seconds.length() == 1) return minutes + ":0" + seconds;
-        else return minutes + ":" + seconds;
+    @SuppressLint("DefaultLocale")
+    private String formatDuration(int duration) {
+        long minutes = TimeUnit.MINUTES.convert(duration, TimeUnit.MILLISECONDS);
+        long seconds = TimeUnit.SECONDS.convert(duration, TimeUnit.MILLISECONDS)
+                - minutes * TimeUnit.SECONDS.convert(1, TimeUnit.MINUTES);
+
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     private void getIntentMethod() {
@@ -144,17 +179,38 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             position = getIntent().getIntExtra("position", -1);
 
             StorageUtil storage = new StorageUtil(getApplicationContext());
-            //audioList = storage.loadAudio();
+            songList = storage.loadAudio();
             audioIndex = storage.loadAudioIndex();
             Log.d(TAG, "getIntentMethod: This is audioIndex: "+audioIndex);
 
             Log.i(TAG, "getPosition: " + position);
-            setImage(songList.get(audioIndex).getPath(), songList.get(audioIndex).getTitle());
-            songName.setText(songList.get(audioIndex).getTitle());
-            artistName.setText(songList.get(audioIndex).getArtist());
-            albumName.setText(songList.get(audioIndex).getAlbum());
+            setImage(songList.get(position).getPath(), songList.get(position).getTitle());
+            songName.setText(songList.get(position).getTitle());
+            artistName.setText(songList.get(position).getArtist());
+            albumName.setText(songList.get(position).getAlbum());
+
+            int duration = Integer.parseInt(songList.get(position).getDuration());
+            String totalDuration = formatDuration(duration);
+            durationTotal.setText(totalDuration);
             Log.i(TAG, "getIntentMethod: Position " + position);
         }
+        seekBar.setMax(Integer.parseInt(songList.get(position).getDuration())/1000);
+    }
+
+    void updateMetaData(){
+
+        activeAudio = musicService.getActiveAudio();
+
+        setImage(activeAudio.getPath(), activeAudio.getTitle());
+
+
+        songName.setText(activeAudio.getTitle());
+        artistName.setText(activeAudio.getArtist());
+        albumName.setText(activeAudio.getAlbum());
+
+        int duration = Integer.parseInt(activeAudio.getDuration());
+        String totalDuration = formatDuration(duration);
+        durationTotal.setText(totalDuration);
     }
 
     private void initView() {
@@ -206,14 +262,56 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (image != null)
-            Glide.with(this).asBitmap().load(imageArr).into(image);
+        if (image != null) {
+            imageAnimation(this, image, imageArr);
+            //Glide.with(this).asBitmap().load(imageArr).into(image);
+        }
 
         else {
             Glide.with(this).load(R.drawable.ic_album_art).into(image);
         }
-        String totalDuration = String.valueOf(Integer.parseInt(songList.get(position).getDuration()) / 1000);
-        durationTotal.setText(totalDuration);
+    }
+
+    void imageAnimation(Context context, ImageView imageView, byte[] bitmap){
+        Animation animationOut = AnimationUtils.loadAnimation(context, android.R.anim.fade_out);
+        Animation animationIn = AnimationUtils.loadAnimation(context, android.R.anim.fade_in);
+
+        animationOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                Glide.with(context).asBitmap().load(bitmap).into(imageView);
+                animationIn.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+
+                    }
+                });
+
+                imageView.startAnimation(animationIn);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        imageView.startAnimation(animationOut);
     }
 
     @Override
@@ -240,11 +338,13 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         }
         if (view.getId() == R.id.next) {
             musicService.skipToNext();
-            getIntentMethod();
+            //getIntentMethod();
+            updateMetaData();
         }
         if (view.getId() == R.id.previous) {
             musicService.skipToPrevious();
-            getIntentMethod();
+            //getIntentMethod();
+            updateMetaData();
         }
         if (view.getId() == R.id.shuffle) {
             if (shuffleBoolean) {

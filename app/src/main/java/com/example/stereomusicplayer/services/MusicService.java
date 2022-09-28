@@ -15,7 +15,6 @@ import android.media.session.MediaSessionManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -26,8 +25,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-import com.example.stereomusicplayer.MainActivity;
-import com.example.stereomusicplayer.PlaybackStatus;
 import com.example.stereomusicplayer.PlayerActivity;
 import com.example.stereomusicplayer.R;
 import com.example.stereomusicplayer.interfaces.PlayerInterface;
@@ -77,7 +74,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         super.onCreate();
 
         audioList = songFiles;
-        System.out.println(audioList);
         register_playNewAudio();
         Toast.makeText(this, "Service started...", Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onCreate() , service started...");
@@ -152,13 +148,13 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         //unregister BroadcastReceivers
         //unregisterReceiver(becomingNoisyReceiver);
-        unregisterReceiver(playNewAudio);
+        //unregisterReceiver(playNewAudio);
 
         //clear cached playlist
-        new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
+        //new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
 
         Toast.makeText(this, "Service stopped...", Toast.LENGTH_SHORT).show();
-        Log.i(TAG, "onCreate() , service stopped...");
+        Log.i(TAG, "onDestroy() , service stopped...");
     }
 
     public void skipToNext() {
@@ -208,10 +204,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        //Invoked when playback of a media source has completed.
+        /*//Invoked when playback of a media source has completed.
         stopMedia();
         //stop the service
-        stopSelf();
+        stopSelf();*/
+        skipToNext();
     }
 
     @Override
@@ -280,7 +277,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void resumeMedia() {
         if (!mediaPlayer.isPlaying()) {
-            seekTo(getCurrentPosition());
+            seekTo(getResumePosition());
             mediaPlayer.start();
         }
     }
@@ -288,6 +285,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     @Override
     public void seekTo(int position) {
         mediaPlayer.seekTo(position);
+        Log.d(TAG, "seekTo: position: "+ position);
     }
 
     @Override
@@ -298,8 +296,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     }
 
     @Override
-    public int getCurrentPosition() {
+    public int getResumePosition() {
         return resumePosition;
+    }
+
+
+    @Override
+    public int getCurrentPosition() {
+        return mediaPlayer.getCurrentPosition();
     }
 
     @Override
@@ -323,8 +327,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         try {
             // Set the data source to the mediaFile location
-            mediaPlayer.setDataSource(mediaFile);
-            //mediaPlayer.setDataSource(activeAudio.getPath());
+            //mediaPlayer.setDataSource(mediaFile);
+            mediaPlayer.setDataSource(activeAudio.getPath());
         } catch (IOException e) {
             e.printStackTrace();
             stopSelf();
@@ -430,5 +434,9 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         //Register playNewMedia receiver
         IntentFilter filter = new IntentFilter(PlayerActivity.Broadcast_PLAY_NEW_AUDIO);
         registerReceiver(playNewAudio, filter);
+    }
+
+    public Songs getActiveAudio() {
+        return activeAudio != null ? activeAudio : audioList.get(0);
     }
 }

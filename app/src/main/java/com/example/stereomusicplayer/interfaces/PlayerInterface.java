@@ -11,6 +11,7 @@ public interface PlayerInterface {
     void resumeMedia();
     void seekTo(int position);
     boolean isPlaying();
+    int getResumePosition();
     int getCurrentPosition();
     int getDuration();
     void skipToNext();

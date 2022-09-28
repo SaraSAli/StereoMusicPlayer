@@ -111,7 +111,7 @@
             android:layout_width="68dp"
             android:layout_height="68dp"
             android:background="@android:color/transparent"
-            app:srcCompat="@drawable/ic_shuffle_on"
+            app:srcCompat="@drawable/ic_shuffle_off"
    />
 
         <ImageButton
@@ -137,7 +137,7 @@
             android:layout_width="68dp"
             android:layout_height="68dp"
             android:background="@android:color/transparent"
-            app:srcCompat="@drawable/ic_repeat_on" />
+            app:srcCompat="@drawable/ic_repeat_off" />
     </LinearLayout>
 
 </LinearLayout>
