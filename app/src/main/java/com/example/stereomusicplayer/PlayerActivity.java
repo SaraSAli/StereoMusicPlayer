@@ -6,9 +6,11 @@ import static com.example.stereomusicplayer.MainActivity.songFiles;
 import static com.example.stereomusicplayer.adapters.AlbumDetailsAdapter.albumFiles;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
@@ -118,7 +120,6 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             @Override
             public void run() {
                 if (isBound) {
-                    Log.d(TAG, "run: musicService getCurrentPosition: " + musicService.getCurrentPosition()/1000);
                     //seekBar.setProgress(musicService.getCurrentPosition() / 1000);
                     int mCurrentPosition = musicService.getCurrentPosition();
                     seekBar.setProgress(mCurrentPosition/1000);
@@ -132,6 +133,8 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             }
         };
         runnable.run();
+
+        register_playNextAudio();
     }
 
     private void playAudio(String media, int index) {
@@ -145,6 +148,7 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             Intent playerIntent = new Intent(this, MusicService.class);
             playerIntent.putExtra("media", media);
             playerIntent.putExtra("position", index);
+            playerIntent.setAction(MusicService.ACTION_PLAY);
             startService(playerIntent);
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
             playBtn.setBackgroundResource(R.drawable.ic_pause);
@@ -312,6 +316,20 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         });
 
         imageView.startAnimation(animationOut);
+    }
+
+    private BroadcastReceiver playNextAudio = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            musicService.skipToNext();
+            updateMetaData();
+        }
+    };
+
+    private void register_playNextAudio() {
+        //Register playNewMedia receiver
+        IntentFilter filter = new IntentFilter(MusicService.Broadcast_PLAY_NEXT_AUDIO);
+        registerReceiver(playNextAudio, filter);
     }
 
     @Override

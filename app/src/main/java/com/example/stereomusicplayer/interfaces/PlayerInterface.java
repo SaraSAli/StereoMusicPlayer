@@ -1,9 +1,5 @@
 package com.example.stereomusicplayer.interfaces;
 
-import com.example.stereomusicplayer.model.Songs;
-
-import java.io.IOException;
-
 public interface PlayerInterface {
     void playMedia();
     void stopMedia();

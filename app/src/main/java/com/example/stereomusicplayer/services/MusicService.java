@@ -2,22 +2,23 @@ package com.example.stereomusicplayer.services;
 
 import static com.example.stereomusicplayer.MainActivity.songFiles;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.Rating;
+import android.media.session.MediaController;
+import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaControllerCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -40,15 +41,22 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         MediaPlayer.OnInfoListener, PlayerInterface,
         AudioManager.OnAudioFocusChangeListener {
 
+    public static final String ACTION_PLAY = "com.example.stereomusicplayer.ACTION_PLAY";
+    public static final String ACTION_PAUSE = "com.example.stereomusicplayer.ACTION_PAUSE";
+    public static final String ACTION_PREVIOUS = "com.example.stereomusicplayer.ACTION_PREVIOUS";
+    public static final String ACTION_NEXT = "com.example.stereomusicplayer.ACTION_NEXT";
+    public static final String ACTION_STOP = "com.example.stereomusicplayer.ACTION_STOP";
+    public static final String Broadcast_PLAY_NEXT_AUDIO = "com.example.stereomusicplayer.PlayNewAudio";
+
+    private MediaPlayer mMediaPlayer;
+    private MediaSessionManager mManager;
+    private MediaSession mSession;
+    private MediaController mController;
+
     private static final String TAG = "Music Service";
     private MediaPlayer mediaPlayer;
     private String mediaFile;
     Uri uri;
-
-    //MediaSession
-    private MediaSessionManager mediaSessionManager;
-    private MediaSessionCompat mediaSession;
-    private MediaControllerCompat.TransportControls transportControls;
 
     ArrayList<Songs> audioList;
     private int audioIndex = -1;
@@ -109,11 +117,18 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             stopSelf();
         }
 
-        if (mediaSessionManager == null) {
+        if( mManager == null ) {
+            initMediaSessions();
+            initMediaPlayer();
+        }
+
+        handleIntent(intent);
+
+        /*if (mediaSessionManager == null) {
             //initMediaSession();
             initMediaPlayer();
             //buildNotification(PlaybackStatus.PLAYING);
-        }
+        }*/
 
         //Handle Intent action from MediaSession.TransportControls
         //handleIncomingActions(intent);
@@ -122,7 +137,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     @Override
     public boolean onUnbind(Intent intent) {
-        mediaSession.release();
+        //mediaSession.release();
+        mSession.release();
         //removeNotification();
         return super.onUnbind(intent);
     }
@@ -208,7 +224,10 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         stopMedia();
         //stop the service
         stopSelf();*/
-        skipToNext();
+        //skipToNext();
+        mediaPlayer.reset();
+        initMediaPlayer();
+        sendBroadcast();
     }
 
     @Override
@@ -336,6 +355,65 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         mediaPlayer.prepareAsync();
     }
 
+    private void initMediaSessions() {
+        mSession = new MediaSession(getApplicationContext(), "simple player session");
+        mController = new MediaController(getApplicationContext(), mSession.getSessionToken());
+
+        mSession.setCallback(new MediaSession.Callback() {
+            @Override
+            public void onPlay() {
+                super.onPlay();
+                Log.e("MusicService", "onPlay");
+                buildNotification(generateAction(android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE));
+            }
+
+            @Override
+            public void onPause() {
+                super.onPause();
+                Log.e("MusicService", "onPause");
+                buildNotification(generateAction(android.R.drawable.ic_media_play, "Play", ACTION_PLAY));
+            }
+
+            @Override
+            public void onSkipToNext() {
+                super.onSkipToNext();
+                Log.e("MediaPlayerService", "onSkipToNext");
+                //Change media here
+                //skipToNext();
+                buildNotification(generateAction(android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE));
+            }
+
+            @Override
+            public void onSkipToPrevious() {
+                super.onSkipToPrevious();
+                Log.e("MediaPlayerService", "onSkipToPrevious");
+                //Change media here
+                buildNotification(generateAction(android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE));
+            }
+
+            @Override
+            public void onStop() {
+                super.onStop();
+                Log.e("MediaPlayerService", "onStop");
+                //Stop media player here
+                NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.cancel(1);
+                Intent intent = new Intent(getApplicationContext(), MusicService.class);
+                stopService(intent);
+            }
+
+            @Override
+            public void onSeekTo(long pos) {
+                super.onSeekTo(pos);
+            }
+
+            @Override
+            public void onSetRating(Rating rating) {
+                super.onSetRating(rating);
+            }
+        });
+    }
+
     public class MusicBinder extends Binder {
         public MusicService getService() {
             return MusicService.this;
@@ -355,6 +433,53 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
         stopService(new Intent(this, MusicService.class));
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent == null || intent.getAction() == null)
+            return;
+
+        String action = intent.getAction();
+
+        if (action.equalsIgnoreCase(ACTION_PLAY)) {
+            mController.getTransportControls().play();
+        } else if (action.equalsIgnoreCase(ACTION_PAUSE)) {
+            mController.getTransportControls().pause();
+        } else if (action.equalsIgnoreCase(ACTION_PREVIOUS)) {
+            mController.getTransportControls().skipToPrevious();
+        } else if (action.equalsIgnoreCase(ACTION_NEXT)) {
+            mController.getTransportControls().skipToNext();
+        } else if (action.equalsIgnoreCase(ACTION_STOP)) {
+            mController.getTransportControls().stop();
+        }
+    }
+
+    private Notification.Action generateAction(int icon, String title, String intentAction) {
+        Intent intent = new Intent(getApplicationContext(), MusicService.class);
+        intent.setAction(intentAction);
+        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
+        return new Notification.Action.Builder(icon, title, pendingIntent).build();
+    }
+
+    private void buildNotification(Notification.Action action) {
+        Notification.MediaStyle style = new Notification.MediaStyle();
+        Intent intent = new Intent(getApplicationContext(), MusicService.class);
+        intent.setAction(ACTION_STOP);
+        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
+        Notification.Builder builder = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ic_album_art)
+                .setContentTitle(activeAudio.getTitle())
+                .setContentText(activeAudio.getAlbum())
+                .setDeleteIntent(pendingIntent)
+                .setStyle(style);
+
+        builder.addAction(generateAction(android.R.drawable.ic_media_previous, "Previous", ACTION_PREVIOUS));
+        builder.addAction(action);
+        builder.addAction(generateAction(android.R.drawable.ic_media_next, "Next", ACTION_NEXT));
+        style.setShowActionsInCompactView(0, 2, 4);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(1, builder.build());
     }
 
 
@@ -381,7 +506,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         }
     };
 
-
+    private void sendBroadcast(){
+        //Send a broadcast to the Activity -> UPDATE_PLAY_NEXT_AUDIO
+        Intent broadcastIntent = new Intent(Broadcast_PLAY_NEXT_AUDIO);
+        sendBroadcast(broadcastIntent);
+    }
 
     @Override
     public void onAudioFocusChange(int focusState) {
