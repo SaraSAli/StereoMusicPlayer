@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.session.MediaSessionManager;
 import android.net.Uri;
@@ -156,6 +157,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         Bitmap largeIcon = BitmapFactory.decodeResource(getResources(),
                 R.drawable.ic_album_art);
 
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(activeAudio.getPath());
+        byte[] imageArr = retriever.getEmbeddedPicture();
+
+        if(imageArr != null){
+            largeIcon = BitmapFactory.decodeByteArray(imageArr,0, imageArr.length);
+        }
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID_2)
                 .setShowWhen(false)
                 .setColor(getResources().getColor(R.color.colorAccent))
@@ -237,6 +246,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         //Set mediaSession's MetaData
         updateMetaData();
+        register_updateMetadata();
 
         // Attach Callback to receive MediaSession updates
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -543,7 +553,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, activeAudio.getTitle())
                 .build());
     }
-
 
     private BroadcastReceiver playNewAudio = new BroadcastReceiver() {
         @Override

@@ -400,11 +400,13 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             musicService.skipToNext();
             //getIntentMethod();
             updateMetaData();
+            sendBroadcast_UPDATE_METADATA();
         }
         if (view.getId() == R.id.previous) {
             musicService.skipToPrevious();
             //getIntentMethod();
             updateMetaData();
+            sendBroadcast_UPDATE_METADATA();
         }
         if (view.getId() == R.id.shuffle) {
             if (shuffleBoolean) {
