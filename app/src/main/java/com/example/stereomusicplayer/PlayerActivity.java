@@ -41,10 +41,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnCompletionListener, View.OnClickListener {
+public class PlayerActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "PlayerActivity";
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.stereomusicplayer.services.MusicService.PlayNewAudio";
+    public static final String Broadcast_UPDATE_AUDIO_METADATA = "com.example.stereomusicplayer.UpdateMetadata";
+
 
 
     TextView songName, artistName, albumName, durationPlayed, durationTotal;
@@ -135,6 +137,8 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         runnable.run();
 
         register_playNextAudio();
+        register_updateMetadata();
+        register_updateButton();
     }
 
     private void playAudio(String media, int index) {
@@ -148,7 +152,6 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
             Intent playerIntent = new Intent(this, MusicService.class);
             playerIntent.putExtra("media", media);
             playerIntent.putExtra("position", index);
-            playerIntent.setAction(MusicService.ACTION_PLAY);
             startService(playerIntent);
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE);
             playBtn.setBackgroundResource(R.drawable.ic_pause);
@@ -318,6 +321,12 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         imageView.startAnimation(animationOut);
     }
 
+    private void sendBroadcast_UPDATE_METADATA(){
+        //Send a broadcast to the Activity -> UPDATE_AUDIO_METADATA
+        Intent broadcastIntent = new Intent(Broadcast_UPDATE_AUDIO_METADATA);
+        sendBroadcast(broadcastIntent);
+    }
+
     private BroadcastReceiver playNextAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -326,10 +335,43 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
         }
     };
 
+    private BroadcastReceiver updateMetadata = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateMetaData();
+        }
+    };
+
+    private BroadcastReceiver updateButton = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle args = intent.getBundleExtra("DATA");
+            PlaybackStatus playbackStatus = (PlaybackStatus) args.getSerializable("Action");
+            if(playbackStatus == PlaybackStatus.PAUSED){
+                playBtn.setBackgroundResource(R.drawable.ic_play);
+            }else if(playbackStatus == PlaybackStatus.PLAYING){
+                playBtn.setBackgroundResource(R.drawable.ic_pause);
+            }
+            //updateMetaData();
+        }
+    };
+
     private void register_playNextAudio() {
         //Register playNewMedia receiver
         IntentFilter filter = new IntentFilter(MusicService.Broadcast_PLAY_NEXT_AUDIO);
         registerReceiver(playNextAudio, filter);
+    }
+
+    private void register_updateMetadata(){
+
+        IntentFilter filter = new IntentFilter(MusicService.Broadcast_UPDATE_AUDIO_METADATA);
+        registerReceiver(updateMetadata, filter);
+    }
+
+    private void register_updateButton(){
+
+        IntentFilter filter = new IntentFilter(MusicService.Broadcast_UPDATE_BUTTON);
+        registerReceiver(updateButton, filter);
     }
 
     @Override
@@ -382,11 +424,6 @@ public class PlayerActivity extends AppCompatActivity implements MediaPlayer.OnC
                 repeatBtn.setImageResource(R.drawable.ic_repeat_on);
             }
         }
-    }
-
-    @Override
-    public void onCompletion(MediaPlayer mediaPlayer) {
-
     }
 
     @Override
