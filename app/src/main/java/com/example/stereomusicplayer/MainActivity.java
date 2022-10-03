@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 import android.widget.SearchView;
 
 import com.example.stereomusicplayer.fragments.AlbumFragment;
@@ -39,11 +40,13 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private TabLayout mTablayout;
     private ViewPager2 mViewPager;
     ScreenSlidePagerAdapter pagerAdapter;
+    FrameLayout frag_bottom_player;
 
     private String[] titles = {"Songs", "Albums", "Artists"};
     public static final int PERMISSION_REQUEST_CODE = 1;
 
-    static boolean shuffleBoolean = false, repeatBoolean = false;
+    public static boolean shuffleBoolean = false;
+    public static boolean repeatBoolean = false;
 
     private String MY_SORT_PREF = "SortOrder";
 

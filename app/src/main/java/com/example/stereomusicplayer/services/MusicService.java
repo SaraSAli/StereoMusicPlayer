@@ -1,5 +1,7 @@
 package com.example.stereomusicplayer.services;
 
+import static com.example.stereomusicplayer.MainActivity.repeatBoolean;
+import static com.example.stereomusicplayer.MainActivity.shuffleBoolean;
 import static com.example.stereomusicplayer.MainActivity.songFiles;
 
 import android.app.NotificationManager;
@@ -40,6 +42,7 @@ import com.example.stereomusicplayer.utils.StorageUtil;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class MusicService extends Service implements MediaPlayer.OnCompletionListener,
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener,
@@ -341,13 +344,14 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
     public void skipToNext() {
         Log.i(TAG, "skipToNext: Before audioIndex: "+audioIndex);
-        if (audioIndex == audioList.size() - 1) {
-            //if last in playlist
-            audioIndex = 0;
+        Log.i(TAG, "skipToNext: shuffle value "+ shuffleBoolean);
+        if(shuffleBoolean && !repeatBoolean){
+            audioIndex = getRandom(audioList.size()-1);
             activeAudio = audioList.get(audioIndex);
-        } else {
-            //get next in playlist
-            activeAudio = audioList.get(++audioIndex);
+        }
+        else if(!shuffleBoolean && !repeatBoolean){
+            audioIndex = (audioIndex+1) % audioList.size();
+            activeAudio = audioList.get(audioIndex);
         }
         Log.i(TAG, "skipToNext: After audioIndex: "+audioIndex);
 
@@ -362,16 +366,19 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         updateMetaData();
     }
 
-    public void skipToPrevious() {
+    private int getRandom(int i) {
+        Random random = new Random();
+        return random.nextInt(i + 1);
+    }
 
-        if (audioIndex == 0) {
-            //if first in playlist
-            //set index to the last of audioList
-            audioIndex = audioList.size() - 1;
+    public void skipToPrevious() {
+        if(shuffleBoolean && !repeatBoolean){
+            audioIndex = getRandom(audioList.size()-1);
             activeAudio = audioList.get(audioIndex);
-        } else {
-            //get previous in playlist
-            activeAudio = audioList.get(--audioIndex);
+        }
+        else if(!shuffleBoolean && !repeatBoolean){
+            audioIndex = (audioIndex-1) % audioList.size();
+            activeAudio = audioList.get(audioIndex);
         }
 
         //Update stored index
