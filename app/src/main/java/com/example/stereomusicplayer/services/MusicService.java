@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -61,6 +62,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
     public static final String Broadcast_UPDATE_AUDIO_METADATA = "com.example.stereomusicplayer.UpdateMetadata";
     public static final String Broadcast_UPDATE_BUTTON = "com.example.stereomusicplayer.UpdateButton";
 
+    public static final String MUSIC_LAST_PLAYED = "MUSIC_LAST_PLAYED";
+    public static final String MUSIC_FILE = "STORED_MUSIC";
+    public static final String SONG_NAME = "SONG_NAME";
+    public static final String ARTIST_NAME = "ARTIST_NAME";
+
     //MediaSession
     private MediaSessionManager mediaSessionManager;
     private MediaSessionCompat mediaSession;
@@ -99,7 +105,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         audioList = songFiles;
         register_playNewAudio();
-        register_updateMetadata();
+        //register_updateMetadata();
         Toast.makeText(this, "Service started...", Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onCreate() , service started...");
     }
@@ -142,10 +148,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         //Handle Intent action from MediaSession.TransportControls
         handleIncomingActions(intent);
-        return super.onStartCommand(intent, flags, startId);
+        //return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
-    private void buildNotification(PlaybackStatus playbackStatus) {
+    public void buildNotification(PlaybackStatus playbackStatus) {
         int notificationAction = android.R.drawable.ic_media_pause;
         PendingIntent play_pauseAction = null;
 
@@ -183,7 +190,8 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
                 .addAction(notificationAction, "pause", play_pauseAction)
                 .addAction(android.R.drawable.ic_media_next, "next", playbackAction(2));
 
-        ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFICATION_ID, notificationBuilder.build());
+        //((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFICATION_ID, notificationBuilder.build());
+        startForeground(NOTIFICATION_ID, notificationBuilder.build());
     }
 
     private void removeNotification() {
@@ -249,7 +257,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         //Set mediaSession's MetaData
         updateMetaData();
-        register_updateMetadata();
+        //register_updateMetadata();
 
         // Attach Callback to receive MediaSession updates
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -257,7 +265,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             @Override
             public void onPlay() {
                 super.onPlay();
-
                 sendBroadcast_BUTTON_UPDATE(PlaybackStatus.PLAYING);
                 resumeMedia();
                 buildNotification(PlaybackStatus.PLAYING);
@@ -305,18 +312,18 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         });
     }
 
-    @Override
+  /*  @Override
     public boolean onUnbind(Intent intent) {
         //mediaSession.release();
         //removeNotification();
         return super.onUnbind(intent);
-    }
+    }*/
 
     @Override
     public void onDestroy() {
-        stopForeground(true);
-        stopSelf();
         super.onDestroy();
+        stopSelf();
+        stopForeground(true);
         if (mediaPlayer != null) {
             stopMedia();
             mediaPlayer.release();
@@ -333,24 +340,28 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
 
         //unregister BroadcastReceivers
         //unregisterReceiver(becomingNoisyReceiver);
-        //unregisterReceiver(playNewAudio);
+        unregisterReceiver(playNewAudio);
 
         //clear cached playlist
         //new StorageUtil(getApplicationContext()).clearCachedAudioPlaylist();
 
-        Toast.makeText(this, "Service stopped...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "onDestroy() , Service stopped...", Toast.LENGTH_SHORT).show();
         Log.i(TAG, "onDestroy() , service stopped...");
     }
 
+    private int getRandom(int i) {
+        Random random = new Random();
+        return random.nextInt(i + 1);
+    }
+
     public void skipToNext() {
-        Log.i(TAG, "skipToNext: Before audioIndex: "+audioIndex);
-        Log.i(TAG, "skipToNext: shuffle value "+ shuffleBoolean);
-        if(shuffleBoolean && !repeatBoolean){
-            audioIndex = getRandom(audioList.size()-1);
+        Log.i(TAG, "skipToNext: Before audioIndex: " + audioIndex);
+        Log.i(TAG, "skipToNext: shuffle value " + shuffleBoolean);
+        if (shuffleBoolean && !repeatBoolean) {
+            audioIndex = getRandom(audioList.size() - 1);
             activeAudio = audioList.get(audioIndex);
-        }
-        else if(!shuffleBoolean && !repeatBoolean){
-            audioIndex = (audioIndex+1) % audioList.size();
+        } else if (!shuffleBoolean && !repeatBoolean) {
+            audioIndex = (audioIndex + 1) % audioList.size();
             activeAudio = audioList.get(audioIndex);
         }
         Log.i(TAG, "skipToNext: After audioIndex: "+audioIndex);
@@ -364,11 +375,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         mediaPlayer.reset();
         initMediaPlayer();
         updateMetaData();
-    }
-
-    private int getRandom(int i) {
-        Random random = new Random();
-        return random.nextInt(i + 1);
     }
 
     public void skipToPrevious() {
@@ -521,6 +527,11 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             // Set the data source to the mediaFile location
             //mediaPlayer.setDataSource(mediaFile);
             mediaPlayer.setDataSource(activeAudio.getPath());
+            SharedPreferences.Editor editor = getSharedPreferences(MUSIC_LAST_PLAYED, MODE_PRIVATE).edit();
+            editor.putString(MUSIC_FILE, activeAudio.getPath());
+            editor.putString(SONG_NAME, activeAudio.getTitle());
+            editor.putString(ARTIST_NAME, activeAudio.getArtist());
+            editor.apply();
         } catch (IOException e) {
             e.printStackTrace();
             stopSelf();
@@ -581,13 +592,7 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
             mediaPlayer.reset();
             initMediaPlayer();
             updateMetaData();
-        }
-    };
-
-    private BroadcastReceiver updateMetadata = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            updateMetaData();
+            buildNotification(PlaybackStatus.PLAYING);
         }
     };
 
@@ -664,12 +669,6 @@ public class MusicService extends Service implements MediaPlayer.OnCompletionLis
         //Register playNewMedia receiver
         IntentFilter filter = new IntentFilter(PlayerActivity.Broadcast_PLAY_NEW_AUDIO);
         registerReceiver(playNewAudio, filter);
-    }
-
-    private void register_updateMetadata(){
-
-        IntentFilter filter = new IntentFilter(MusicService.Broadcast_UPDATE_AUDIO_METADATA);
-        registerReceiver(updateMetadata, filter);
     }
 
     public Songs getActiveAudio() {

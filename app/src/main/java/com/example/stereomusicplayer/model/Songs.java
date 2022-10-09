@@ -1,7 +1,12 @@
 package com.example.stereomusicplayer.model;
 
+
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import java.io.Serializable;
 
+@Entity
 public class Songs implements Serializable {
     private String path;
     private String title;
@@ -9,14 +14,37 @@ public class Songs implements Serializable {
     private String album;
     private String duration;
     private String id;
+    @PrimaryKey
+    private int songID;
 
-    public Songs(String path, String title, String artist, String album, String duration, String id) {
+    boolean isFavourite = false;
+
+    public boolean isFavourite() {
+        return isFavourite;
+    }
+
+    public void setFavourite(boolean favourite) {
+        isFavourite = favourite;
+    }
+
+    public Songs(String path, String title, String artist, String album, String duration, String id, int songID) {
         this.path = path;
         this.title = title;
         this.artist = artist;
         this.album = album;
         this.duration = duration;
         this.id = id;
+        this.songID = songID;
+    }
+
+    public Songs(String id, String path, String title, String artist, String album, String duration, boolean isFavourite) {
+        this.path = path;
+        this.title = title;
+        this.artist = artist;
+        this.album = album;
+        this.duration = duration;
+        this.id = id;
+        this.isFavourite = isFavourite;
     }
 
     public Songs() {
@@ -68,6 +96,14 @@ public class Songs implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public int getSongID() {
+        return songID;
+    }
+
+    public void setSongID(int songID) {
+        this.songID = songID;
     }
 }
 

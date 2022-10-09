@@ -13,29 +13,32 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.transition.Slide;
 import android.util.Log;
-import android.view.MenuItem;
+import android.view.Gravity;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.example.stereomusicplayer.database.SongRoomDatabase;
+import com.example.stereomusicplayer.fragments.FavouriteFragment;
 import com.example.stereomusicplayer.model.Songs;
 import com.example.stereomusicplayer.services.MusicService;
 import com.example.stereomusicplayer.utils.StorageUtil;
-import com.example.stereomusicplayer.viewmodel.PlayerActivityViewModel;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,17 +46,20 @@ import java.util.concurrent.TimeUnit;
 
 public class PlayerActivity extends AppCompatActivity implements View.OnClickListener {
 
+    public static final String EXTRA_SONG= "com.example.android.wordlistsql.SONG";
+    public static final String EXTRA_NAME = "com.example.stereomusicplayer.NAME";
+    public static final String EXTRA_ALBUM = "com.example.stereomusicplayer.ALBUM";
+    public static final String EXTRA_ARTIST = "com.example.stereomusicplayer.ARTIST";
     private static final String TAG = "PlayerActivity";
     public static final String Broadcast_PLAY_NEW_AUDIO = "com.example.stereomusicplayer.services.MusicService.PlayNewAudio";
     public static final String Broadcast_UPDATE_AUDIO_METADATA = "com.example.stereomusicplayer.UpdateMetadata";
 
 
-
     TextView songName, artistName, albumName, durationPlayed, durationTotal;
-    ImageButton playBtn, nextBtn, prevBtn, shuffleBtn, repeatBtn;
+    ImageButton playBtn, nextBtn, prevBtn;
+    ImageView shuffleBtn, repeatBtn, addToFavourite, openMenu;
     SeekBar seekBar;
-
-    PlayerActivityViewModel viewModel;
+    FrameLayout myFramelayout;
 
     static ArrayList<Songs> songList = new ArrayList<>();
 
@@ -62,6 +68,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     Songs activeAudio;
 
     boolean isBound;
+
+    SongRoomDatabase database;
     MusicService musicService;
     Runnable runnable;
     Handler handler = new Handler();
@@ -71,7 +79,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             MusicService.MusicBinder binder = (MusicService.MusicBinder) iBinder;
             musicService = binder.getService();
-            //PlayerActivity.this.onServiceConnected();
             isBound = true;
             Log.d(TAG, "Service Bound");
 
@@ -79,8 +86,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            isBound = false;
-            Log.d(TAG, "onServiceDisconnected");
+
         }
     };
 
@@ -92,6 +98,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         initView();
         getIntentMethod();
         playAudio(songList.get(position).getPath(), position);
+        setAnimation();
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -121,14 +128,14 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         runnable = new Runnable() {
             @Override
             public void run() {
-                if (isBound) {
+                if (isBound && musicService.isPlaying()) {
                     //seekBar.setProgress(musicService.getCurrentPosition() / 1000);
                     int mCurrentPosition = musicService.getCurrentPosition();
-                    seekBar.setProgress(mCurrentPosition/1000);
+                    seekBar.setProgress(mCurrentPosition / 1000);
                     durationPlayed.setText(formatDuration(mCurrentPosition));
 
                     int totalDuration = musicService.getDuration();
-                    if(seekBar.getProgress() == totalDuration) updateMetaData();
+                    if (seekBar.getProgress() == totalDuration) updateMetaData();
 
                 }
                 handler.postDelayed(this, 1000);
@@ -141,12 +148,27 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         register_updateButton();
     }
 
+    @Override
+    protected void onResume() {
+        Intent intent = new Intent(this, MusicService.class);
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        Toast.makeText(this, "onResume: + index " + position, Toast.LENGTH_SHORT).show();
+        getIntentMethod();
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        /*unbindService(serviceConnection);
+        Toast.makeText(this, "onPause: unbind + index "+ position, Toast.LENGTH_SHORT).show();*/
+    }
+
     private void playAudio(String media, int index) {
         //Check is service is active
         if (!isBound) {
             StorageUtil storage = new StorageUtil(getApplicationContext());
             storage.storeAudio(songList);
-            //storage.storeAudioIndex(audioIndex);
             storage.storeAudioIndex(index);
 
             Intent playerIntent = new Intent(this, MusicService.class);
@@ -178,11 +200,7 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void getIntentMethod() {
-        Log.d(TAG, "getIncomingIntent: checking for incoming intents.");
-
         if (getIntent().hasExtra("position")) {
-            Log.d(TAG, "getIncomingIntent: found intent extras.");
-
             position = getIntent().getIntExtra("position", -1);
 
             StorageUtil storage = new StorageUtil(getApplicationContext());
@@ -205,11 +223,9 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     void updateMetaData(){
-
         activeAudio = musicService.getActiveAudio();
 
         setImage(activeAudio.getPath(), activeAudio.getTitle());
-
 
         songName.setText(activeAudio.getTitle());
         artistName.setText(activeAudio.getArtist());
@@ -228,10 +244,14 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
 
         String getSender = getIntent().getStringExtra("sender");
 
-        if(getSender != null && getSender.equals("albumDetails"))
+        if (getSender != null && getSender.equals("albumDetails"))
             songList = albumFiles;
-        else
+        else if (getSender != null && getSender.equals("favourites")) {
+            //Do something
+        } else
             songList = songFiles;
+
+        myFramelayout = findViewById(R.id.container);
 
         songName = findViewById(R.id.tv_song_name);
         artistName = findViewById(R.id.tv_artist_name);
@@ -244,6 +264,8 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         prevBtn = findViewById(R.id.previous);
         shuffleBtn = findViewById(R.id.shuffle);
         repeatBtn = findViewById(R.id.repeat);
+        addToFavourite = findViewById(R.id.add_to_playlist);
+        openMenu = findViewById(R.id.open_menu);
 
         seekBar = findViewById(R.id.seekBar);
         playBtn.setOnClickListener(this);
@@ -251,11 +273,11 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         prevBtn.setOnClickListener(this);
         repeatBtn.setOnClickListener(this);
         shuffleBtn.setOnClickListener(this);
+        addToFavourite.setOnClickListener(this);
+        openMenu.setOnClickListener(this);
     }
 
     private void setImage(String imageUrl, String songName) {
-        Log.d(TAG, "setImage: setting te image and name to widgets.");
-
         TextView name = findViewById(R.id.tv_song_name);
         name.setText(songName);
 
@@ -321,12 +343,6 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
         imageView.startAnimation(animationOut);
     }
 
-    private void sendBroadcast_UPDATE_METADATA(){
-        //Send a broadcast to the Activity -> UPDATE_AUDIO_METADATA
-        Intent broadcastIntent = new Intent(Broadcast_UPDATE_AUDIO_METADATA);
-        sendBroadcast(broadcastIntent);
-    }
-
     private BroadcastReceiver playNextAudio = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -375,24 +391,17 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            this.finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onClick(View view) {
         if (view.getId() == R.id.play) {
             if (isBound) {
                 if (musicService.isPlaying()) {
                     musicService.pauseMedia();
                     playBtn.setBackgroundResource(R.drawable.ic_play);
+                    musicService.buildNotification(PlaybackStatus.PAUSED);
                 } else {
                     musicService.playMedia();
                     playBtn.setBackgroundResource(R.drawable.ic_pause);
+                    musicService.buildNotification(PlaybackStatus.PLAYING);
                 }
             }
         }
@@ -400,13 +409,13 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
             musicService.skipToNext();
             //getIntentMethod();
             updateMetaData();
-            sendBroadcast_UPDATE_METADATA();
+            musicService.buildNotification(PlaybackStatus.PLAYING);
         }
         if (view.getId() == R.id.previous) {
             musicService.skipToPrevious();
             //getIntentMethod();
             updateMetaData();
-            sendBroadcast_UPDATE_METADATA();
+            musicService.buildNotification(PlaybackStatus.PLAYING);
         }
         if (view.getId() == R.id.shuffle) {
             if (shuffleBoolean) {
@@ -426,37 +435,62 @@ public class PlayerActivity extends AppCompatActivity implements View.OnClickLis
                 repeatBtn.setImageResource(R.drawable.ic_repeat_on);
             }
         }
-    }
-
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        outState.putBoolean("ServiceState", isBound);
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        isBound = savedInstanceState.getBoolean("ServiceState");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (isBound) {
-            unbindService(serviceConnection);
-            //service is active
-            musicService.stopSelf();
+        if (view.getId() == R.id.add_to_playlist) {
+            if (songList.get(position).isFavourite()) {
+                addToFavourite.setImageResource(R.drawable.add_to_playlist);
+                songList.get(position).setFavourite(false);
+                Songs song = songList.get(position);
+                database = SongRoomDatabase.getInstance(getApplicationContext());
+                database.songDao().delete(song);
+                //favouriteFiles.remove(position);
+            } else {
+                addToFavourite.setImageResource(R.drawable.added_to_playlist);
+                songList.get(position).setFavourite(true);
+                addToFavourite();
+            }
         }
+        if (view.getId() == R.id.open_menu) {
+            myFramelayout.setVisibility(View.VISIBLE);
+
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.container, new FavouriteFragment())
+                    .addToBackStack(null)
+                    .commit();
+        }
+    }
+
+    void addToFavourite() {
+        Songs song = new Songs(String.valueOf(position)
+                , songList.get(position).getTitle()
+                , songList.get(position).getArtist()
+                , songList.get(position).getAlbum()
+                , songList.get(position).getDuration()
+                , songList.get(position).getPath()
+                , position);
+
+        /*database = SongRoomDatabase.getInstance(getApplicationContext());
+        database.songDao().insert(song);*/
+
+        Intent replyIntent = new Intent();
+        replyIntent.putExtra(EXTRA_SONG, song);
+        setResult(RESULT_OK, replyIntent);
+        //finish();
+    }
+
+    public void setAnimation() {
+        Slide slide = new Slide();
+        slide.setSlideEdge(Gravity.TOP);
+        slide.setDuration(400);
+        slide.setInterpolator(new AccelerateDecelerateInterpolator());
+        getWindow().setExitTransition(slide);
+        getWindow().setEnterTransition(slide);
     }
 
     @Override
     public void onBackPressed() {
-
         // If the user is currently looking at the first step, allow the system to handle the
         // Back button. This calls finish() on this activity and pops the back stack.
         super.onBackPressed();
         finish();
-
     }
 }

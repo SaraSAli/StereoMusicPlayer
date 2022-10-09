@@ -2,7 +2,6 @@ package com.example.stereomusicplayer.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.provider.MediaStore;
 
 import com.example.stereomusicplayer.model.Songs;
 import com.google.gson.Gson;

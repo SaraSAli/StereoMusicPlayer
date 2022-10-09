@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.stereomusicplayer.AlbumDetails;
 import com.example.stereomusicplayer.PlayerActivity;
 import com.example.stereomusicplayer.R;
 import com.example.stereomusicplayer.model.Songs;

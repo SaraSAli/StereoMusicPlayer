@@ -1,22 +1,18 @@
 package com.example.stereomusicplayer.fragments;
 
 import static com.example.stereomusicplayer.MainActivity.albums;
-import static com.example.stereomusicplayer.MainActivity.songFiles;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.stereomusicplayer.R;
 import com.example.stereomusicplayer.adapters.AlbumAdapter;
-import com.example.stereomusicplayer.adapters.SongAdapter;
 
 public class AlbumFragment extends Fragment {
 
@@ -40,7 +36,6 @@ public class AlbumFragment extends Fragment {
         if(!(size < 1)){
             albumAdapter = new AlbumAdapter(getContext(), albums);
             recyclerView.setAdapter(albumAdapter);
-            //recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
             recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         }
         return view;

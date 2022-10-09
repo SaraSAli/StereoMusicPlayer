@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,9 +57,6 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.ViewHolder> {
             Glide.with(mContext).load(R.drawable.ic_album_art).into(holder.album_art);
 
         holder.parentLayout.setOnClickListener(view -> {
-            Log.d(TAG, "onClick: clicked on: " + songsList.get(position));
-            Toast.makeText(mContext, songsList.get(position).toString(), Toast.LENGTH_SHORT).show();
-
             Intent i = new Intent(mContext, PlayerActivity.class);
             i.putExtra("position", position);
             mContext.startActivity(i);

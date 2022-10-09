@@ -9,6 +9,13 @@
     android:background="@drawable/bg"
     tools:context=".PlayerActivity">
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:id="@+id/container"
+        />
+
     <ImageView
         android:id="@+id/album_art"
         android:layout_width="match_parent"
@@ -62,12 +69,33 @@
         android:textAlignment="center"
         android:textSize="22sp" />
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp">
+
+        <ImageView
+            android:id="@+id/add_to_playlist"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_centerHorizontal="true"
+            android:background="@android:color/transparent"
+            android:scaleType="fitXY"
+            app:srcCompat="@drawable/add_to_playlist" />
+
+        <ImageView
+            android:id="@+id/open_menu"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentRight="true"
+            android:background="@android:color/transparent"
+            app:srcCompat="@drawable/ic_menu_open" />
+    </RelativeLayout>
+
     <LinearLayout
         android:id="@+id/seekBarL"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/artist"
-        android:layout_alignParentStart="true"
         android:orientation="horizontal"
         android:paddingTop="4dp"
         android:weightSum="1">
@@ -84,7 +112,9 @@
             android:layout_width="266dp"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_weight="0.87" />
+            android:layout_weight="0.87"
+            android:progressTint="#673AB7"
+            android:thumbTint="#2B2B2B" />
 
         <TextView
             android:id="@+id/time_duration"
@@ -97,22 +127,20 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/seekBar"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
         android:orientation="horizontal"
         android:paddingTop="12dp"
-        android:weightSum="5"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="center"
+        android:layout_marginTop="30dp"
         android:gravity="center">
 
 
-        <ImageButton
+        <ImageView
             android:id="@+id/shuffle"
             android:layout_width="68dp"
             android:layout_height="68dp"
             android:background="@android:color/transparent"
-            app:srcCompat="@drawable/ic_shuffle_off"
-   />
+            app:srcCompat="@drawable/ic_shuffle_off" />
 
         <ImageButton
             android:id="@+id/previous"
@@ -132,7 +160,7 @@
             android:layout_height="68dp"
             android:background="@drawable/ic_next"/>
 
-        <ImageButton
+        <ImageView
             android:id="@+id/repeat"
             android:layout_width="68dp"
             android:layout_height="68dp"
